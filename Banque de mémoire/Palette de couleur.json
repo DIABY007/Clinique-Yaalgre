@@ -1,0 +1,22 @@
+{
+  "Brand": {
+    "Primary_Forest": "#0A4D3C", 
+    "Secondary_Sage": "#6B8E78",
+    "Accent_Terracotta": "#C96A35" 
+  },
+  "Surfaces_and_Backgrounds": {
+    "App_Background": "#F8FAF9",
+    "Card_Surface": "#FFFFFF",
+    "Border_Divider": "#E2E8E5"
+  },
+  "Typography": {
+    "Text_Main": "#1A2521",
+    "Text_Muted": "#52665E"
+  },
+  "Semantic_Feedback": {
+    "Error_Danger": "#D93838",
+    "Warning_Alert": "#F5A623",
+    "Success_Valid": "#2E8B57",
+    "Info_Notice": "#2B6CB0"
+  }
+}

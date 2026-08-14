@@ -1,69 +1,126 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { LoginWrapper } from "@/components/auth/login-wrapper";
+import { Navbar } from "@/components/layout/navbar";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <LoginWrapper>
+      <DashboardHome />
+    </LoginWrapper>
+  );
+}
+
+function DashboardHome() {
+  const { user, logout } = useAuth();
+  const supabase = createClient();
+  const [counts, setCounts] = useState({
+    patients: 0,
+    consultations: 0,
+    factures: 0,
+    examensEnAttente: 0,
+  });
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from("patient").select("*", { count: "exact", head: true }).eq("est_archive", false),
+      supabase.from("consultation").select("*", { count: "exact", head: true }),
+      supabase.from("facture").select("*", { count: "exact", head: true }),
+      supabase.from("examen_laboratoire").select("*", { count: "exact", head: true }).neq("statut", "RESULTAT_DISPONIBLE"),
+    ]).then(([p, c, f, e]) => {
+      setCounts({
+        patients: p.count ?? 0,
+        consultations: c.count ?? 0,
+        factures: f.count ?? 0,
+        examensEnAttente: e.count ?? 0,
+      });
+    });
+  }, []);
+
+  return (
+    <>
+      <Navbar userName={user?.nom} userRole={user?.role} />
+      <main className="mx-auto max-w-5xl flex-1 px-4 py-8 sm:px-6 pb-24 md:pb-8">
+        {/* Welcome */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-text-main">
+            Bonjour, {user?.nom?.split(" ")[0] ?? "Docteur"} 👋
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-text-muted mt-1">Tableau de bord</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Counters */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Link href="/patients"
+            className="rounded-xl border border-border-divider bg-surface-card p-5 transition-all hover:border-primary-forest/30 hover:shadow-sm active:scale-[0.98]">
+            <p className="text-3xl font-bold text-primary-forest">{counts.patients}</p>
+            <p className="text-sm text-text-muted mt-1">Patients</p>
+          </Link>
+          <Link href="/examens"
+            className="rounded-xl border border-border-divider bg-surface-card p-5 transition-all hover:border-primary-forest/30 hover:shadow-sm active:scale-[0.98]">
+            <p className="text-3xl font-bold text-accent-terracotta">{counts.examensEnAttente}</p>
+            <p className="text-sm text-text-muted mt-1">Examens en attente</p>
+          </Link>
+          <Link href="/factures"
+            className="rounded-xl border border-border-divider bg-surface-card p-5 transition-all hover:border-primary-forest/30 hover:shadow-sm active:scale-[0.98]">
+            <p className="text-3xl font-bold text-secondary-sage">{counts.factures}</p>
+            <p className="text-sm text-text-muted mt-1">Factures</p>
+          </Link>
+          <Link href="/patients/new"
+            className="rounded-xl border border-border-divider bg-surface-card p-5 transition-all hover:border-primary-forest/30 hover:shadow-sm active:scale-[0.98]">
+            <p className="text-3xl font-bold text-info-notice">{counts.consultations}</p>
+            <p className="text-sm text-text-muted mt-1">Consultations</p>
+          </Link>
+        </div>
+
+        {/* Quick actions */}
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-text-main mb-4">Actions rapides</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Link href="/patients/new">
+              <Button className="w-full h-14 text-sm">➕ Patient</Button>
+            </Link>
+            <Link href="/patients">
+              <Button variant="secondary" className="w-full h-14 text-sm">
+                👥 Liste patients
+              </Button>
+            </Link>
+            <Link href="/bilan">
+              <Button variant="outline" className="w-full h-14 text-sm">
+                📊 Bilan du jour
+              </Button>
+            </Link>
+            <Link href="/stocks">
+              <Button variant="outline" className="w-full h-14 text-sm">
+                📦 Stock
+              </Button>
+            </Link>
+            <Link href="/depenses">
+              <Button variant="outline" className="w-full h-14 text-sm">
+                💸 Dépenses
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Logout */}
+        <div className="mt-12 text-center">
+          <button
+            onClick={logout}
+            className="text-sm text-text-muted hover:text-error-danger transition-colors px-4 py-2
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-forest rounded-lg"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Se déconnecter
+          </button>
         </div>
       </main>
-    </div>
+      <BottomNav />
+    </>
   );
 }

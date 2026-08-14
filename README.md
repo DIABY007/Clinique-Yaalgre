@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏥 Clinique Yaalgre
 
-## Getting Started
+Système de Gestion de Clinique — PWA Offline-First
 
-First, run the development server:
+**Stack :** Next.js 16 · Supabase · Shadcn UI · Tailwind CSS · Serwist · TanStack Query · Dexie.js
+
+## 🚀 Démarrage
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev -- --webpack
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔐 Connexion
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Rôle | Identifiant | Code |
+|---|---|---|
+| Administrateur | `/admin` | `1955` |
+| Médecin | Dr Diallo | `1234` |
 
-## Learn More
+## 🏗️ Build Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build -- --webpack
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🌐 Déploiement Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Pusher sur GitHub
+2. Importer le projet sur [Vercel](https://vercel.com)
+3. Framework : **Next.js**
+4. Build command : `next build --webpack`
+5. Ajouter les variables d'environnement :
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
 
-## Deploy on Vercel
+## 📱 PWA
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Installable sur mobile. Fonctionne hors-ligne avec synchronisation automatique au retour du réseau.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🗄️ Base de données
+
+15 tables (Supabase PostgreSQL) avec RLS, triggers, contraintes XOR.
+Migrations dans `supabase/migrations/`.

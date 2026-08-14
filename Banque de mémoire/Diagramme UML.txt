@@ -1,0 +1,186 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Énumérations ---
+enum StatutExamen {
+    PRELEVE
+    ENVOYE
+    RESULTAT_DISPONIBLE
+}
+
+enum CategorieDepense {
+    COTISATION_CLINIQUE
+    COTISATION_MEDECIN
+    ACHAT_ARTHESOUN
+    AUTRE
+}
+
+enum TypeGestionStock {
+    STRICT
+    MASSE
+}
+
+enum TypeMouvement {
+    ENTREE
+    SORTIE
+    AJUSTEMENT_NEGATIF
+}
+
+' --- Acteurs ---
+class Utilisateur {
+    - id_utilisateur : UUID {PK}
+    - nom : String
+    - role : String
+    - code_pin_hash : String
+    - est_actif : Boolean
+}
+
+' --- Classes Médicales ---
+class Patient {
+    - id_patient : UUID {PK}
+    - telephone : String
+    - nom : String
+    - prenom : String
+    - date_creation : DateTime
+    - est_archive : Boolean
+    + getHistoriqueConsultations() : List<Consultation>
+}
+
+class Consultation {
+    - id_consultation : UUID {PK}
+    - date_heure : DateTime
+    - diagnostic : String
+    + ajouterDocument(doc: DocumentImporte) : void
+    + prescrireExamen(examen: ExamenLaboratoire) : void
+}
+
+class DocumentImporte {
+    - id_document : UUID {PK}
+    - type_document : String
+    - chemin_image : String
+}
+
+class TypeExamen {
+    - id_type_examen : UUID {PK}
+    - libelle : String {Unique}
+}
+
+class ExamenLaboratoire {
+    - id_examen : UUID {PK}
+    - statut : StatutExamen
+    - date_mise_a_jour : DateTime
+    + mettreAJourStatut(nouveauStatut: StatutExamen) : void
+}
+
+' --- Classes Financières ---
+class CatalogueActe {
+    - id_acte : UUID {PK}
+    - libelle : String
+    - prix_unitaire : Decimal
+}
+
+class Facture {
+    - id_facture : UUID {PK}
+    - date_facture : DateTime
+    + calculer_montant_total() : Decimal
+    + calculer_reste_a_payer() : Decimal
+    + ajouterPaiement(paiement: Paiement) : void
+}
+
+class LigneFacture {
+    - id_ligne : UUID {PK}
+    - quantite : Integer
+    - prix_unitaire_applique : Decimal
+}
+
+class Paiement {
+    - id_paiement : UUID {PK}
+    - montant_encaisse : Decimal
+    - date_paiement : DateTime
+    - est_verrouille : Boolean
+    - motif_annulation : String
+}
+
+class Depense {
+    - id_depense : UUID {PK}
+    - categorie : CategorieDepense
+    - description_autre : String
+    - montant : Decimal
+    - date_depense : DateTime
+    - est_verrouille : Boolean
+    - motif_annulation : String
+}
+
+class BilanJournalier {
+    - id_bilan : UUID {PK}
+    - date_bilan : Date
+    - total_recettes : Decimal
+    - total_depenses : Decimal
+    - solde_net : Decimal
+    + cloturer_journee(factures: List<Facture>, depenses: List<Depense>) : Decimal
+}
+
+' --- Classes de Stock ---
+class Produit {
+    - id_produit : UUID {PK}
+    - code_barre : String {Unique}
+    - nom : String
+    - type_gestion : TypeGestionStock
+    - prix_unitaire : Decimal
+}
+
+class MouvementStock {
+    - id_mouvement : UUID {PK}
+    - quantite : Integer
+    - type_mouvement : TypeMouvement
+    - motif_ajustement : String
+    - date_mouvement : DateTime
+}
+
+class RegleConsommation {
+    - id_regle : UUID {PK}
+    - quantite_deduite : Integer
+}
+
+' --- Relations et Cardinalités ---
+Utilisateur "1" -- "0..*" Consultation : saisit >
+Utilisateur "1" -- "0..*" Paiement : encaisse >
+Utilisateur "1" -- "0..*" Depense : engage >
+Utilisateur "1" -- "0..*" MouvementStock : enregistre >
+
+Patient "1" -- "0..*" Consultation : effectue >
+Consultation *-- "0..*" DocumentImporte : possède (Composition)
+
+Consultation "1" -- "0..*" ExamenLaboratoire : prescrit >
+ExamenLaboratoire "0..*" -- "1" TypeExamen : référence >
+
+Consultation "1" -- "1" Facture : génère >
+Facture *-- "1..*" LigneFacture : contient (Composition)
+
+LigneFacture "0..*" -- "0..1" CatalogueActe : concerne acte >
+LigneFacture "0..*" -- "0..1" Produit : concerne produit >
+note right of LigneFacture
+  {XOR} Une ligne pointe soit vers
+  un Acte, soit vers un Produit.
+end note
+
+Facture "1" -- "0..*" Paiement : reçoit >
+
+BilanJournalier "0..1" <-- "0..*" Paiement : rattaché à <
+BilanJournalier "0..1" <-- "0..*" Depense : rattaché à <
+note right of BilanJournalier
+  Le bilan s'approprie physiquement 
+  les transactions (Clé étrangère).
+  Les montants négatifs permettent 
+  la contre-passation des erreurs.
+end note
+
+Produit "1" -- "0..*" MouvementStock : subit >
+Consultation "0..1" -- "0..*" MouvementStock : justifie (Sortie) >
+
+RegleConsommation "0..*" -- "1" Produit : déduit >
+RegleConsommation "0..*" -- "1" TypeExamen : liée à >
+
+@enduml
