@@ -1,9 +1,18 @@
-import { createClient } from "@/utils/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-const supabase = createClient();
+let _supabase: SupabaseClient | null = null;
+
+async function getClient(): Promise<SupabaseClient> {
+  if (!_supabase) {
+    const { createClient } = await import("@/utils/supabase/client");
+    _supabase = createClient();
+  }
+  return _supabase;
+}
 
 // ── LISTER UTILISATEURS ──
 export async function fetchUsers() {
+  const supabase = await getClient();
   const { data, error } = await supabase
     .from("utilisateur")
     .select("id_utilisateur, nom, role, est_actif")
@@ -19,6 +28,7 @@ export async function createUser(input: {
   role: string;
   code_pin_hash: string;
 }) {
+  const supabase = await getClient();
   const { data, error } = await supabase
     .from("utilisateur")
     .insert({
@@ -36,6 +46,7 @@ export async function createUser(input: {
 
 // ── DÉSACTIVER / RÉACTIVER ──
 export async function toggleUserStatus(id: string, actif: boolean) {
+  const supabase = await getClient();
   const { error } = await supabase
     .from("utilisateur")
     .update({ est_actif: actif })
