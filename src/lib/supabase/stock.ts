@@ -1,12 +1,11 @@
-import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
+import { getSupabase } from "./client-lazy";
 
 // ── VÉRIFICATION STOCK (pour les sorties) ──
 export async function checkStockAvantSortie(
   produitId: string,
   quantiteDemandee: number
 ): Promise<{ ok: boolean; stockActuel: number; produit: string }> {
+  const supabase = await getSupabase();
   // Récupérer le produit
   const { data: produit } = await supabase
     .from("produit")
@@ -44,6 +43,7 @@ export async function checkStockAvantSortie(
 
 // ── LISTE PRODUITS ──
 export async function fetchProduits() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("produit")
     .select("*")
@@ -55,6 +55,7 @@ export async function fetchProduits() {
 
 // ── STOCK DISPONIBLE (calculé via les mouvements) ──
 export async function fetchStockDisponible(produitId?: string) {
+  const supabase = await getSupabase();
   let query = supabase
     .from("mouvement_stock")
     .select("id_produit, quantite, type_mouvement");
@@ -84,6 +85,7 @@ export async function createProduit(input: {
   prix_unitaire: number;
   code_barre?: string;
 }) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("produit")
     .insert(input)
@@ -103,6 +105,7 @@ export async function createMouvement(input: {
   motif_ajustement?: string;
   id_consultation?: string;
 }) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("mouvement_stock")
     .insert(input)
@@ -115,6 +118,7 @@ export async function createMouvement(input: {
 
 // ── HISTORIQUE MOUVEMENTS D'UN PRODUIT ──
 export async function fetchMouvements(produitId: string) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("mouvement_stock")
     .select("*")

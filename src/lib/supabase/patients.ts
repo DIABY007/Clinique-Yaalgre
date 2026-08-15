@@ -1,7 +1,5 @@
-import { createClient } from "@/utils/supabase/client";
+import { getSupabase } from "./client-lazy";
 import type { Patient } from "@/db/database";
-
-const supabase = createClient();
 
 // ── LIST ──
 export async function fetchPatients(
@@ -9,6 +7,7 @@ export async function fetchPatients(
   page: number = 0,
   pageSize: number = 20
 ): Promise<{ data: Patient[]; count: number }> {
+  const supabase = await getSupabase();
   let query = supabase
     .from("patient")
     .select("*", { count: "exact" })
@@ -28,12 +27,13 @@ export async function fetchPatients(
   return { data: data ?? [], count: count ?? 0 };
 }
 
-// ── CREATE (Supabase direct uniquement) ──
+// ── CREATE ──
 export async function createPatient(input: {
   nom: string;
   prenom: string;
   telephone: string;
 }): Promise<Patient> {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("patient")
     .insert({
@@ -58,6 +58,7 @@ export async function updatePatient(
     est_archive: boolean;
   }>
 ): Promise<Patient> {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("patient")
     .update(input)
@@ -69,8 +70,9 @@ export async function updatePatient(
   return data;
 }
 
-// ── ARCHIVE (soft delete) ──
+// ── ARCHIVE ──
 export async function archivePatient(id: string): Promise<void> {
+  const supabase = await getSupabase();
   const { error } = await supabase
     .from("patient")
     .update({ est_archive: true })
@@ -83,6 +85,7 @@ export async function archivePatient(id: string): Promise<void> {
 export async function fetchPatient(
   id: string
 ): Promise<Patient & { consultations?: unknown[] }> {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("patient")
     .select("*, consultations:consultation(*)")

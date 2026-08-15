@@ -1,6 +1,4 @@
-import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
+import { getSupabase } from "./client-lazy";
 
 // ── CREATE ──
 export async function createConsultation(input: {
@@ -8,6 +6,7 @@ export async function createConsultation(input: {
   id_utilisateur: string;
   diagnostic?: string;
 }): Promise<{ id_consultation: string }> {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("consultation")
     .insert({
@@ -24,6 +23,7 @@ export async function createConsultation(input: {
 
 // ── GET PATIENT CONSULTATIONS ──
 export async function fetchPatientConsultations(patientId: string) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("consultation")
     .select("*, documents:document_importe(*), examens:examen_laboratoire(*, type_examen(*))")
@@ -40,6 +40,7 @@ export async function saveDocumentRecord(input: {
   type_document: string;
   chemin_image: string;
 }): Promise<void> {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("document_importe").insert({
     id_consultation: input.id_consultation,
     type_document: input.type_document,
@@ -54,6 +55,7 @@ export async function prescribeExam(input: {
   id_consultation: string;
   id_type_examen: string;
 }): Promise<void> {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("examen_laboratoire").insert({
     id_consultation: input.id_consultation,
     id_type_examen: input.id_type_examen,
@@ -67,6 +69,7 @@ export async function prescribeExam(input: {
 export async function fetchExamTypes(): Promise<
   { id_type_examen: string; libelle: string }[]
 > {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("type_examen")
     .select("id_type_examen, libelle")

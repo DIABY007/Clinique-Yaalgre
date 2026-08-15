@@ -1,6 +1,4 @@
-import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
+import { getSupabase } from "./client-lazy";
 
 const CATEGORIES = [
   "COTISATION_CLINIQUE",
@@ -20,6 +18,7 @@ export const CATEGORIES_LABELS: Record<CategorieDepense, string> = {
 
 // ── LISTER ──
 export async function fetchDepenses(page = 0, pageSize = 50) {
+  const supabase = await getSupabase();
   const { data, count, error } = await supabase
     .from("depense")
     .select("*", { count: "exact" })
@@ -37,6 +36,7 @@ export async function createDepense(input: {
   montant: number;
   description_autre?: string;
 }) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("depense")
     .insert({
@@ -54,6 +54,7 @@ export async function createDepense(input: {
 
 // ── CATALOGUE DÉPENSES (dépenses récurrentes) ──
 export async function fetchCatalogueDepenses() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("catalogue_depense")
     .select("*")
@@ -68,6 +69,7 @@ export async function createCatalogueDepense(input: {
   montant_defaut: number;
   id_utilisateur?: string | null;
 }) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("catalogue_depense")
     .insert(input)
@@ -79,6 +81,7 @@ export async function createCatalogueDepense(input: {
 }
 
 export async function deleteCatalogueDepense(id: string) {
+  const supabase = await getSupabase();
   const { error } = await supabase
     .from("catalogue_depense")
     .delete()
@@ -89,6 +92,7 @@ export async function deleteCatalogueDepense(id: string) {
 
 // ── DÉPENSES DU JOUR ──
 export async function fetchDepensesDuJour() {
+  const supabase = await getSupabase();
   const today = new Date().toISOString().split("T")[0];
   const { data, error } = await supabase
     .from("depense")

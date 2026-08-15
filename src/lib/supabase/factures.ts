@@ -1,10 +1,8 @@
-import { createClient } from "@/utils/supabase/client";
-import { enqueueSync } from "@/db/database";
-
-const supabase = createClient();
+import { getSupabase } from "./client-lazy";
 
 // ── LISTE DES ACTES ──
 export async function fetchActes() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("catalogue_acte")
     .select("*")
@@ -16,6 +14,7 @@ export async function fetchActes() {
 
 // ── LISTE DES PRODUITS ──
 export async function fetchProducts() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("produit")
     .select("id_produit, nom, prix_unitaire, type_gestion, code_barre")
@@ -27,6 +26,7 @@ export async function fetchProducts() {
 
 // ── CONSULTATIONS SANS FACTURE ──
 export async function fetchConsultationsWithoutFacture() {
+  const supabase = await getSupabase();
   // 1. Récupérer les consultations
   const { data: consultations, error: consError } = await supabase
     .from("consultation")
@@ -55,6 +55,7 @@ async function checkStockProduit(
   produitId: string,
   quantite: number
 ): Promise<{ ok: boolean; stock: number; nom: string }> {
+  const supabase = await getSupabase();
   // Récupérer le produit
   const { data: produit } = await supabase
     .from("produit")
@@ -93,6 +94,7 @@ export async function createFacture(input: {
     id_produit?: string | null;
   }>;
 }): Promise<string> {
+  const supabase = await getSupabase();
   // Vérifier stock pour chaque ligne produit (STRICT)
   for (const ligne of input.lignes) {
     if (ligne.id_produit) {
@@ -149,6 +151,7 @@ export async function addPaiement(input: {
   montant_encaisse: number;
   id_utilisateur: string;
 }): Promise<void> {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("paiement").insert({
     id_facture: input.id_facture,
     montant_encaisse: input.montant_encaisse,
@@ -160,6 +163,7 @@ export async function addPaiement(input: {
 
 // ── RÉCUPÉRER FACTURE AVEC DÉTAILS ──
 export async function fetchFacture(id: string) {
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("facture")
     .select(
@@ -174,6 +178,7 @@ export async function fetchFacture(id: string) {
 
 // ── LISTE FACTURES ──
 export async function fetchFactures(page = 0, pageSize = 20) {
+  const supabase = await getSupabase();
   const { data, count, error } = await supabase
     .from("facture")
     .select("*, consultation:consultation(id_patient, patient:patient(nom, prenom))", {
@@ -201,6 +206,7 @@ export function calculerResteAPayer(
 
 // ── BILAN JOURNALIER ──
 export async function getOrCreateBilan(): Promise<{ id_bilan: string }> {
+  const supabase = await getSupabase();
   // Essayer de trouver le bilan du jour
   const { data: existing } = await supabase
     .from("bilan_journalier")
@@ -223,6 +229,7 @@ export async function getOrCreateBilan(): Promise<{ id_bilan: string }> {
 
 // ── CLÔTURER LE BILAN ──
 export async function cloturerBilan(): Promise<void> {
+  const supabase = await getSupabase();
   const today = new Date().toISOString().split("T")[0];
   const bilan = await getOrCreateBilan();
 
