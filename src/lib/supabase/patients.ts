@@ -81,14 +81,20 @@ export async function archivePatient(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// ── GET ONE ──
+// ── GET ONE avec historique complet ──
 export async function fetchPatient(
   id: string
-): Promise<Patient & { consultations?: unknown[] }> {
+): Promise<Patient & { consultations?: any[] }> {
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("patient")
-    .select("*, consultations:consultation(*)")
+    .select(`*,
+      consultations:consultation(
+        *,
+        documents:document_importe(*),
+        examens:examen_laboratoire(*, type_examen:type_examen(libelle))
+      )
+    `)
     .eq("id_patient", id)
     .single();
 
