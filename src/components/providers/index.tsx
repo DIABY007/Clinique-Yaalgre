@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { onlineManager as customOnlineManager } from "@/lib/online-manager";
 import { SyncIndicator } from "@/components/ui/sync-indicator";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { Sidebar } from "@/components/layout/sidebar";
 
 // Connecter le OnlineManager de TanStack Query à notre gestionnaire
 onlineManager.setEventListener((setOnline) => {
@@ -60,7 +61,12 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <Sidebar />
+        <div className="md:ml-64 flex-1 flex flex-col min-h-dvh">
+          {children}
+        </div>
+      </AuthProvider>
       <BottomNav />
       <SyncIndicator />
       <Toaster />
