@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { getAllUtilisateurs, syncUtilisateurs, seedDefaultUser } from "@/db/database";
+import { getAllUtilisateurs, syncUtilisateurs, seedDefaultUser, DEFAULT_USER } from "@/db/database";
 import { verifyPin } from "@/lib/crypto";
 import type { Utilisateur } from "@/db/database";
 
@@ -181,9 +181,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Chercher l'utilisateur dans Dexie (IndexedDB locale)
         const users = await getAllUtilisateurs();
 
-        const foundUser = users.find(
+        let foundUser = users.find(
           (u) => u.nom.toLowerCase() === nom.toLowerCase() && u.est_actif
         );
+
+        // Fallback sur DEFAULT_USER si Dexie était inaccessible
+        if (!foundUser && nom.toLowerCase() === DEFAULT_USER.nom.toLowerCase()) {
+          foundUser = DEFAULT_USER;
+        }
 
         if (!foundUser) {
           setState((prev) => ({

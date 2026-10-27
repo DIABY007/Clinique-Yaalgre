@@ -41,8 +41,15 @@ export async function updateSession(request: NextRequest) {
     } else if (session && error?.message?.includes("NetworkError")) {
       // Même chose pour NetworkError
     } else {
-      // Erreur réelle ou pas de session → redirection vers login
-      if (request.nextUrl.pathname !== "/login") {
+      // Erreur réelle ou pas de session → redirection vers login (sauf routes publiques)
+      const pathname = request.nextUrl.pathname;
+      const isPublicRoute =
+        pathname === "/login" ||
+        pathname === "/onboarding" ||
+        pathname === "/offline" ||
+        pathname.startsWith("/api/health");
+
+      if (!isPublicRoute) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
         return NextResponse.redirect(url);

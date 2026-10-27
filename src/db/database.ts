@@ -205,24 +205,42 @@ export const DEFAULT_USER: Utilisateur = {
 /**
  * Semer l'utilisateur par défaut si la base est vide.
  * Garantit que le login PIN fonctionne même 100% hors-ligne.
+ * Utilise put() pour être strictement idempotent et éviter les ConstraintError.
  */
 export async function seedDefaultUser(): Promise<void> {
-  const count = await db.utilisateurs.count();
-  if (count === 0) {
-    await db.utilisateurs.add(DEFAULT_USER);
+  try {
+    await db.utilisateurs.put(DEFAULT_USER);
+  } catch (err) {
+    console.warn("Erreur seedDefaultUser:", err);
   }
 }
 
 // ── Helpers Utilisateurs ──
 export async function syncUtilisateurs(users: Utilisateur[]): Promise<void> {
-  await db.utilisateurs.clear();
-  await db.utilisateurs.bulkAdd(users);
-  // Si le serveur n'a renvoyé personne, seed le fallback
-  if (users.length === 0) {
+  try {
+    if (users && users.length > 0) {
+      await db.utilisateurs.clear();
+      await db.utilisateurs.bulkPut(users);
+    } else {
+      await seedDefaultUser();
+    }
+  } catch (err) {
+    console.warn("Erreur syncUtilisateurs:", err);
     await seedDefaultUser();
   }
 }
 
 export async function getAllUtilisateurs(): Promise<Utilisateur[]> {
-  return db.utilisateurs.toArray();
+  try {
+    const list = await db.utilisateurs.toArray();
+    if (list.length === 0) {
+      await seedDefaultUser();
+      const recheck = await db.utilisateurs.toArray();
+      return recheck.length > 0 ? recheck : [DEFAULT_USER];
+    }
+    return list;
+  } catch (err) {
+    console.warn("Erreur getAllUtilisateurs:", err);
+    return [DEFAULT_USER];
+  }
 }

@@ -20,36 +20,46 @@ export default function LoginPage() {
   const [users, setUsers] = useState<{ nom: string; role: string }[]>([]);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Rediriger vers onboarding si pas fait
+  // Rediriger vers onboarding si pas fait (tolérant aux restrictions de stockage)
   useEffect(() => {
-    const onboardingDone = localStorage.getItem("onboarding_done");
-    if (!onboardingDone && !isLoading) {
-      router.replace("/onboarding");
+    try {
+      const onboardingDone = typeof window !== "undefined" ? localStorage.getItem("onboarding_done") : null;
+      if (!onboardingDone && !isLoading) {
+        router.replace("/onboarding");
+      }
+    } catch {
+      // Ignorer si localStorage est bloqué (mode privé / cookies désactivés)
     }
   }, [isLoading, router]);
 
-  // Charger les utilisateurs depuis Dexie (ou seed du défaut)
+  // Charger les utilisateurs immédiatement depuis la base locale (Dexie)
+  // et recharger dès que Supabase a synchronisé les utilisateurs distants
   useEffect(() => {
-    if (isSupabaseReady) {
-      getAllUtilisateurs().then((u) => {
-        if (u.length === 0) {
-          // Seed automatique si la base est vide (offline / première fois)
-          return seedDefaultUser().then(() =>
-            getAllUtilisateurs()
-          );
-        }
-        return u;
-      }).then((users) => {
-        if (users) {
+    let mounted = true;
+
+    async function loadUsers() {
+      try {
+        const u = await getAllUtilisateurs();
+        if (mounted && u && u.length > 0) {
           setUsers(
-            users.map((user) => ({
+            u.map((user) => ({
               nom: user.nom,
               role: user.role,
             }))
           );
         }
-      });
+      } catch (err) {
+        console.warn("Erreur chargement utilisateurs:", err);
+        if (mounted) {
+          setUsers([{ nom: DEFAULT_USER.nom, role: DEFAULT_USER.role }]);
+        }
+      }
     }
+
+    loadUsers();
+    return () => {
+      mounted = false;
+    };
   }, [isSupabaseReady]);
 
   // Rediriger si déjà connecté
